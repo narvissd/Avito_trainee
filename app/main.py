@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from app.database.db import database
 
 from app.routers.teams import teams_router
+from app.routers.users import users_router
 
 async def startup():
     print("Application is starting...")
@@ -31,11 +32,4 @@ app = FastAPI(
 )
 
 app.include_router(teams_router)
-
-@app.get("/health", tags=["Health"])
-async def health_check():
-    return {
-        "status": "ok",
-        "db_connected": database.is_connected,
-        "env": "production"
-    }
+app.include_router(users_router)
