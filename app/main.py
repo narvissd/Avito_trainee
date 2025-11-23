@@ -5,6 +5,7 @@ from app.database.db import database
 
 from app.routers.teams import teams_router
 from app.routers.users import users_router
+from app.routers.pull_request import pr_router
 
 async def startup():
     print("Application is starting...")
@@ -33,3 +34,4 @@ app = FastAPI(
 
 app.include_router(teams_router)
 app.include_router(users_router)
+app.include_router(pr_router)
