@@ -3,6 +3,8 @@ from typing import AsyncGenerator
 from fastapi import FastAPI
 from app.database.db import database
 
+from app.routers.teams import teams_router
+
 async def startup():
     print("Application is starting...")
     await database.connect()
@@ -28,6 +30,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.include_router(teams_router)
 
 @app.get("/health", tags=["Health"])
 async def health_check():

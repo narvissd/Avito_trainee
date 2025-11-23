@@ -1,7 +1,7 @@
 [project]
 name = "avito"
 version = "4.0.1"
-description = "ФAvito Backend trainee"
+description = "Avito Backend trainee"
 authors = [
     {name = "nikita",email = "nikitashelydko@gmail.com"}
 ]
