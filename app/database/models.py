@@ -1,4 +1,5 @@
-from sqlalchemy import Table, Column, String, Boolean, ForeignKey, DateTime, func, Enum
+from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, String, Table, func
+
 from app.database.db import metadata
 
 pr_status_enum = Enum("OPEN", "MERGED", name="pr_status")

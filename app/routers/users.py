@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
-from app.schemas.users import UserUpdate, UserResponse, UserReviewsResponse
+
 from app.models.users import Users
+from app.schemas.users import UserResponse, UserReviewsResponse, UserUpdate
 
 users_router = APIRouter()
 
@@ -12,9 +13,10 @@ async def set_is_active(data: UserUpdate):
     if updated_user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={"error": {"code": "NOT_FOUND", "message": "User not found"}}
+            detail={"error": {"code": "NOT_FOUND", "message": "User not found"}},
         )
     return {"user": updated_user}
+
 
 @users_router.get("/users/getReview", response_model=UserReviewsResponse)
 async def get_reviews(user_id: str):

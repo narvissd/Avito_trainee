@@ -1,12 +1,14 @@
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
-from fastapi import FastAPI
-from app.database.db import database
 
-from app.routers.teams import teams_router
-from app.routers.users import users_router
+from fastapi import FastAPI
+
+from app.database.db import database
 from app.routers.pull_request import pr_router
 from app.routers.stats import stats_router
+from app.routers.teams import teams_router
+from app.routers.users import users_router
+
 
 async def startup():
     print("Application is starting...")

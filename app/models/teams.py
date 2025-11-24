@@ -1,7 +1,9 @@
-from typing import Optional, Dict, List
+from typing import Dict, List, Optional
+
+from sqlalchemy import insert, select, update
+
 from app.database.db import database
 from app.database.models import teams, users
-from sqlalchemy import select, insert, update
 
 
 class Teams:
@@ -14,14 +16,12 @@ class Teams:
             return None
 
         query = select(users.c.id.label("user_id"), users.c.username, users.c.is_active).where(
-            users.c.team_name == team_name)
+            users.c.team_name == team_name
+        )
 
         data = await database.fetch_all(query)
 
-        return {
-            "team_name": team["name"],
-            "members": [dict(m) for m in data]
-        }
+        return {"team_name": team["name"], "members": [dict(m) for m in data]}
 
     @staticmethod
     async def create(team_name: str, members: List) -> Optional[Dict]:
@@ -41,7 +41,7 @@ class Teams:
                 "id": member.user_id,
                 "username": member.username,
                 "team_name": team_name,
-                "is_active": member.is_active
+                "is_active": member.is_active,
             }
 
             if data_user:
@@ -51,7 +51,4 @@ class Teams:
             else:
                 await database.execute(insert(users).values(**user_data))
 
-        return {
-            "team_name": team_name,
-            "members": [m.dict() for m in members]
-        }
+        return {"team_name": team_name, "members": [m.dict() for m in members]}

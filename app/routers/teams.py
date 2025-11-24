@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
-from app.schemas.teams import Team
+
 from app.models.teams import Teams
+from app.schemas.teams import Team
 
 teams_router = APIRouter()
 
@@ -11,7 +12,8 @@ async def get_team(team_name: str):
     if data is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={"error": {"code": "NOT_FOUND", "message": "Team not found"}})
+            detail={"error": {"code": "NOT_FOUND", "message": "Team not found"}},
+        )
     return data
 
 
@@ -22,6 +24,7 @@ async def create_team(team: Team):
     if result is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"error": {"code": "TEAM_EXISTS", "message": "team_name already exists"}})
+            detail={"error": {"code": "TEAM_EXISTS", "message": "team_name already exists"}},
+        )
 
     return result

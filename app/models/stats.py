@@ -1,13 +1,17 @@
 from typing import Dict
+
+from sqlalchemy import desc, func, select
+
 from app.database.db import database
-from app.database.models import pull_requests, pr_reviewers
-from sqlalchemy import select, func, desc
+from app.database.models import pr_reviewers, pull_requests
 
 
 class Stats:
     @staticmethod
     async def get_stats() -> Dict:
-        query = (select(pull_requests.c.status, func.count().label("count")).group_by(pull_requests.c.status))
+        query = select(pull_requests.c.status, func.count().label("count")).group_by(
+            pull_requests.c.status
+        )
         data = await database.fetch_all(query)
 
         open_count = 0
@@ -19,8 +23,11 @@ class Stats:
                 merge_count = row["count"]
 
         query_top = (
-            select(pr_reviewers.c.user_id, func.count().label("count")).group_by(pr_reviewers.c.user_id).order_by(
-                desc("count")).limit(5))
+            select(pr_reviewers.c.user_id, func.count().label("count"))
+            .group_by(pr_reviewers.c.user_id)
+            .order_by(desc("count"))
+            .limit(5)
+        )
         data_rv = await database.fetch_all(query_top)
 
         return {
@@ -28,7 +35,6 @@ class Stats:
             "pull_requests_open": open_count,
             "pull_requests_merged": merge_count,
             "top_reviewers": [
-                {"user_id": rv["user_id"], "review_count": rv["count"]}
-                for rv in data_rv
-            ]
+                {"user_id": rv["user_id"], "review_count": rv["count"]} for rv in data_rv
+            ],
         }
