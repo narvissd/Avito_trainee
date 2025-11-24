@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import List
 
 class UserUpdate(BaseModel):
     user_id: str
@@ -12,3 +13,13 @@ class User(BaseModel):
 
 class UserResponse(BaseModel):
     user: User
+
+class PullRequestShort(BaseModel):
+    pull_request_id: str
+    pull_request_name: str
+    author_id: str
+    status: str
+
+class UserReviewsResponse(BaseModel):
+    user_id: str
+    pull_requests: List[PullRequestShort]

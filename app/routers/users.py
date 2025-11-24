@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
-from app.schemas.users import UserUpdate, UserResponse
+from app.schemas.users import UserUpdate, UserResponse, UserReviewsResponse
 from app.models.users import Users
 
 users_router = APIRouter()
@@ -15,3 +15,7 @@ async def set_is_active(data: UserUpdate):
             detail={"error": {"code": "NOT_FOUND", "message": "User not found"}}
         )
     return {"user": updated_user}
+
+@users_router.get("/users/getReview", response_model=UserReviewsResponse)
+async def get_reviews(user_id: str):
+    return await Users.get_reviews(user_id)
