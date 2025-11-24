@@ -2,7 +2,7 @@ import random
 from typing import Dict, Union, Optional
 from app.database.db import database
 from app.database.models import pull_requests, pr_reviewers, users
-from sqlalchemy import select, insert, update, func
+from sqlalchemy import select, insert, update, func, delete, and_
 
 
 class PullRequests:
@@ -88,4 +88,70 @@ class PullRequests:
             "status": data_pr_update["status"],
             "assigned_reviewers": reviewers_ids,
             "mergedAt": merged_at
+        }
+
+    @staticmethod
+    async def reassign(pr_id: str, old_user_id: str) -> Union[Dict, str]:
+        query_pr = select(pull_requests.c.id,
+                          pull_requests.c.name,
+                          pull_requests.c.author_id,
+                          pull_requests.c.status,
+                          pull_requests.c.merged_at).where(pull_requests.c.id == pr_id)
+
+        data_pr = await database.fetch_one(query_pr)
+
+        if not data_pr:
+            return "PR_NOT_FOUND"
+
+        if data_pr["status"] == "MERGED":
+            return "PR_MERGED"
+
+        query_rv = select(pr_reviewers.c.user_id).where(
+            and_(pr_reviewers.c.pull_request_id == pr_id, pr_reviewers.c.user_id == old_user_id))
+        if not await database.fetch_one(query_rv):
+            return "NOT_ASSIGNED"
+
+        query_team_rv = select(users.c.team_name).where(users.c.id == old_user_id)
+        data_team = await database.fetch_one(query_team_rv)
+        if not data_team:
+            return "USER_NOT_FOUND"
+        team_name = data_team["team_name"]
+
+        query = select(pr_reviewers.c.user_id).where(pr_reviewers.c.pull_request_id == pr_id)
+        data_rv = await database.fetch_all(query)
+        rv_ids = [rv["user_id"] for rv in data_rv]
+
+        query_candidates = select(users.c.id).where(users.c.team_name == team_name,
+                                                    users.c.is_active == True,
+                                                    users.c.id != data_pr["author_id"],
+                                                    users.c.id != old_user_id)
+        data_candidates = await database.fetch_all(query_candidates)
+        candidates_ids = [row["id"] for row in data_candidates if row["id"] not in rv_ids]
+
+        if not candidates_ids:
+            return "NO_CANDIDATE"
+
+        new_rv_id = random.choice(candidates_ids)
+
+        await database.execute(delete(pr_reviewers).where(
+            and_(pr_reviewers.c.pull_request_id == pr_id, pr_reviewers.c.user_id == old_user_id)))
+        
+        await database.execute(
+            insert(pr_reviewers).values(pull_request_id=pr_id, user_id=new_rv_id)
+        )
+
+
+        update_rv = [uid for uid in rv_ids if uid != old_user_id]
+        update_rv.append(new_rv_id)
+
+        return {
+            "pr": {
+                "pull_request_id": data_pr["id"],
+                "pull_request_name": data_pr["name"],
+                "author_id": data_pr["author_id"],
+                "status": data_pr["status"],
+                "assigned_reviewers": update_rv,
+                "mergedAt": data_pr["merged_at"]
+            },
+            "replaced_by": new_rv_id
         }

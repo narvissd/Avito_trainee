@@ -22,3 +22,13 @@ class PRResponse(BaseModel):
 
 class PRMerge(BaseModel):
     pull_request_id: str
+
+
+class PRReassign(BaseModel):
+    pull_request_id: str
+    old_user_id: str
+
+
+class PRReassignResponse(BaseModel):
+    pr: PullRequest
+    replaced_by: str
