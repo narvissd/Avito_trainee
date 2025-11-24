@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
-from app.schemas.pull_request import PRCreate, PRResponse
+from app.schemas.pull_request import PRCreate, PRResponse, PRMerge
 from app.models.pull_request import PullRequests
 
 pr_router = APIRouter()
@@ -22,6 +22,19 @@ async def create_pr(body: PRCreate):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={"error": {"code": "NOT_FOUND", "message": "Author not found"}}
+        )
+
+    return {"pr": result}
+
+
+@pr_router.post("/pullRequest/merge", response_model=PRResponse)
+async def merge_pr(body: PRMerge):
+    result = await PullRequests.merge(body.pull_request_id)
+
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": {"code": "NOT_FOUND", "message": "PR not found"}}
         )
 
     return {"pr": result}

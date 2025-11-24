@@ -1,8 +1,8 @@
 import random
-from typing import Dict, Union
+from typing import Dict, Union, Optional
 from app.database.db import database
 from app.database.models import pull_requests, pr_reviewers, users
-from sqlalchemy import select, insert
+from sqlalchemy import select, insert, update, func
 
 
 class PullRequests:
@@ -45,4 +45,47 @@ class PullRequests:
             "author_id": author_id,
             "status": "OPEN",
             "assigned_reviewers": assigned_reviewers
+        }
+
+    @staticmethod
+    async def merge(pr_id: str) -> Optional[Dict]:
+        query_pr = select(pull_requests.c.id,
+                          pull_requests.c.name,
+                          pull_requests.c.author_id,
+                          pull_requests.c.status,
+                          pull_requests.c.merged_at
+                          ).where(pull_requests.c.id == pr_id)
+
+        data_pr = await database.fetch_one(query_pr)
+
+        if not data_pr:
+            return None
+
+        if data_pr["status"] == "MERGED":
+            data_pr_update = data_pr
+        else:
+            query_update = (update(pull_requests).where(pull_requests.c.id == pr_id).values(status="MERGED",
+                                                                                            merged_at=func.now()).returning(
+                pull_requests.c.id,
+                pull_requests.c.name,
+                pull_requests.c.author_id,
+                pull_requests.c.status,
+                pull_requests.c.merged_at))
+            data_pr_update = await database.fetch_one(query_update)
+
+        merged_at = data_pr_update["merged_at"]
+        if merged_at:
+            merged_at = merged_at.replace(microsecond=0)
+
+        query = select(pr_reviewers.c.user_id).where(pr_reviewers.c.pull_request_id == pr_id)
+        data_reviewers = await database.fetch_all(query)
+        reviewers_ids = [rev["user_id"] for rev in data_reviewers]
+
+        return {
+            "pull_request_id": data_pr_update["id"],
+            "pull_request_name": data_pr_update["name"],
+            "author_id": data_pr_update["author_id"],
+            "status": data_pr_update["status"],
+            "assigned_reviewers": reviewers_ids,
+            "mergedAt": merged_at
         }
