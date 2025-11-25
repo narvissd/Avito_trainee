@@ -25,30 +25,31 @@ class Teams:
 
     @staticmethod
     async def create(team_name: str, members: List) -> Optional[Dict]:
-        query_check = select(teams.c.name).where(teams.c.name == team_name)
-        existing_team = await database.fetch_one(query_check)
+        async with database.transaction():
+            query_check = select(teams.c.name).where(teams.c.name == team_name)
+            existing_team = await database.fetch_one(query_check)
 
-        if existing_team:
-            return None
+            if existing_team:
+                return None
 
-        await database.execute(insert(teams).values(name=team_name))
+            await database.execute(insert(teams).values(name=team_name))
 
-        for member in members:
-            query_user = select(users.c.id).where(users.c.id == member.user_id)
-            data_user = await database.fetch_one(query_user)
+            for member in members:
+                query_user = select(users.c.id).where(users.c.id == member.user_id)
+                data_user = await database.fetch_one(query_user)
 
-            user_data = {
-                "id": member.user_id,
-                "username": member.username,
-                "team_name": team_name,
-                "is_active": member.is_active,
-            }
+                user_data = {
+                    "id": member.user_id,
+                    "username": member.username,
+                    "team_name": team_name,
+                    "is_active": member.is_active,
+                }
 
-            if data_user:
-                await database.execute(
-                    update(users).where(users.c.id == member.user_id).values(**user_data)
-                )
-            else:
-                await database.execute(insert(users).values(**user_data))
+                if data_user:
+                    await database.execute(
+                        update(users).where(users.c.id == member.user_id).values(**user_data)
+                    )
+                else:
+                    await database.execute(insert(users).values(**user_data))
 
         return {"team_name": team_name, "members": [m.dict() for m in members]}
