@@ -6,13 +6,13 @@ APP_ENTRY ?= app.main:app
 .DEFAULT_GOAL := help
 
 docker-up:
-	docker-compose up -d
+	docker compose up
 
 docker-build:
-	docker-compose build
+	docker compose build
 
 docker-clean:
-	docker-compose down
+	docker compose down
 	docker image prune -f
 
 test:
